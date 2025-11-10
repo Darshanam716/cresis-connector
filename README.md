@@ -48,7 +48,7 @@ CrisisConnect aims to provide a seamless and efficient platform for users to req
 
 1. **Clone the repository:**
    \`\`\`
-   git clone https://github.com/BiswajitRakshit7781/CrisisConnect-Emergency-Service-Provider.git
+   git clone https://github.com/Darshanam716/cresis-connector.git
    \`\`\`
 
 2. **Navigate to the project directory:**
