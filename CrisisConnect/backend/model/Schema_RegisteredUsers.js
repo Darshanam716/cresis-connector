@@ -12,6 +12,6 @@ let new_user=mongoose.Schema({
     homeaddress:String,
     password:String
 })
-const registered_users=mongoose.model("RegisteredUsers",new_user)
-registered_users.collection.createIndex({email:1},{unique:true})
-export default registered_users
+const registeredusers=mongoose.model("Registeredusers",new_user)
+registeredusers.collection.createIndex({email:1},{unique:true})
+export default registeredusers

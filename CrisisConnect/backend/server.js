@@ -2,13 +2,16 @@ import express from 'express'
 import mongoose from 'mongoose'
 import cors from 'cors'
 import bodyParser from 'body-parser';
-import registered_users from './model/Schema_RegisteredUsers.js';
+import registeredusers from './model/Schema_RegisteredUsers.js';
 import transporter from './model/mail.js';
 import mailOptions from './model/mailOptions.js';
 import admin from './model/admin_schema.js';
 import service from './model/service_seek_schema.js';
 import messege from './model/messege_schema.js';
 import axios from 'axios';
+import dotenv from 'dotenv';
+
+dotenv.config()
 const app = express();
 const PORT = process.env.PORT || 5000;
 app.use(cors())
@@ -39,7 +42,7 @@ const set_logout_adm=(obj)=>{
   obj.password=false
 }
 const geo_code=async (latitude,longitude)=>{
-  let f=await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${latitude}%2C${longitude}&key=f5ec9f0dc41d40498e09d0421f507c4a`)
+  let f=await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${latitude}%2C${longitude}&key=2d50cbfa036f4f22888f63a644705fb8`)
   let res=await f.json()
   return res
 }
@@ -75,9 +78,9 @@ app.post('/createAccount', async (req, res) => {
   let u_password=req.body.password
   let new_user
   let sign_in_stat={email:false,email_unique:false,password:false}
-  let existed_user= await registered_users.findOne({email:u_email})
+  let existed_user= await registeredusers.findOne({email:u_email})
   try{
-  new_user=await new registered_users({fullname:u_fullname,sex:u_sex,height:u_height,weight:u_weight,bloodgroup:u_bloodgroup,dob:u_dob,email:u_email,phoneno:u_phoneno,adharno:u_adharno,homeaddress:u_homeaddress,password:u_password})
+  new_user=await new registeredusers({fullname:u_fullname,sex:u_sex,height:u_height,weight:u_weight,bloodgroup:u_bloodgroup,dob:u_dob,email:u_email,phoneno:u_phoneno,adharno:u_adharno,homeaddress:u_homeaddress,password:u_password})
   await new_user.save()
   sign_in_stat.email=true
   sign_in_stat.email_unique=true
@@ -104,7 +107,7 @@ app.post("/login",async (req,res)=>{
   set_logout(log_stat)
   let log_email=req.body.email
   let log_pass=req.body.password
-  let db_email= await registered_users.findOne({email:log_email})
+   let db_email= await registeredusers.findOne({email:log_email})
   if(db_email!==null){
     log_stat.email=true
   if(db_email.password === log_pass){
@@ -156,7 +159,7 @@ app.post("/request-service",async (req,res)=>{
   let now = new Date()
   if(confirm){
   if(log_stat.email===true && log_stat.password==true){
-    let user_details=await registered_users.findOne({email:log_stat.email_val})
+    let user_details=await registeredusers.findOne({email:log_stat.email_val})
     try{
     let serve=await new service({name:user_details.fullname,
       email:user_details.email,
@@ -188,9 +191,15 @@ app.post("/request-service",async (req,res)=>{
         }
       });
     }
-    catch(error){
-      res.send("Sorry your service request cannot be submitted try again after some time")
+    // catch(error){
+    //   res.send("Sorry your service request cannot be submitted try again after some time")
+    // }
+    catch(error) {
+
+      console.error("Service creation error:", error);
+      res.send("Sorry your service request cannot be submitted try again after some time");
     }
+
   }
   else
   res.send("Sorry your service request cannot be submitted try again after some time")
@@ -202,7 +211,7 @@ app.post("/request-service",async (req,res)=>{
 app.post("/reqsermanually",async (req,res)=>{
   if(log_stat.email && log_stat.password){
     let now=new Date()
-    let user_details=await registered_users.findOne({email:log_stat.email_val})
+    let user_details=await registeredusers.findOne({email:log_stat.email_val})
     try{
       let x=await  fetch(`https://api.opencagedata.com/geocode/v1/json?q= ${req.body.hcity}+${req.body.hdistrict}+${req.body.hstate}+${req.body.hcountry}&key=f5ec9f0dc41d40498e09d0421f507c4a&pretty=1`)
      let forgeo=await x.json()
@@ -293,24 +302,34 @@ app.post("/chat-get",async (req,res)=>{
     else
     res.send({chat:false})
 })
-app.get("/get_messege_email",async (req,res)=>{
-  let emails=await messege.find({})
-  res.send(emails)
-})
+// app.get("/get_messege_email",async (req,res)=>{      
+//   let emails=await messege.find({})
+//   res.send(emails)
+// })
+app.get("/get_messege_email", async (req, res) => {
+    try {
+        const users = await registeredusers.find({}, { email: 1, _id: 0 });
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.post("/generate-otp",async (req,res)=>{
   let email_for_otp=req.body.otpemail
-  let email_present=await registered_users.findOne({email:email_for_otp})
+  let email_present=await registeredusers.findOne({email:email_for_otp})
   if(email_present!==null){
     let otp=generateOtp()
     let requestMailOptions={
-      from: mailOptions.form,
+      from: mailOptions.from,
       to: email_for_otp,
       subject: "Crisist Connect otp confirmation",
       text: `your one time password is ${otp} valid for 3 min`
     }
     transporter.sendMail(requestMailOptions,(error,info)=>{
       if(error){
-        res.send("error sending mail")
+        console.error("Mail Error:", error);
+
       }
       else{
         res.send('check your email for otp')
@@ -346,7 +365,7 @@ app.post("/find_keyplaces",async (req,res)=>{
 let radius
 req.body.type==='fire_station' || req.body.type==='hospital' ?radius=40000:radius=10000
 // Overpass API query to find restaurants
-const overpassUrl = "http://overpass-api.de/api/interpreter";
+const overpassUrl = "";
 const overpassQuery = `
 [out:json];
 node
@@ -379,13 +398,12 @@ async function findNearbyPlaces() {
   }
 }
 
-findNearbyPlaces();
-
-  // findNearestPlace(parseFloat(req.body.lat),parseFloat(req.body.lng), req.body.type)
-  //   .then(results => {
-  //     console.log(results[0])
-  //     res.send(results[0])})
-  //   .catch(err => res.send(err));
+// findNearbyPlaces();
+//   findNearestPlace(parseFloat(req.body.lat),parseFloat(req.body.lng), req.body.type)
+//     .then(results => {
+//       console.log(results[0])
+//       res.send(results[0])})
+//     .catch(err => res.send(err));
   
 })
 app.post("/verify-otp",async (req,res)=>{
@@ -413,7 +431,7 @@ app.post("/update-password",async (req,res)=>{
     verify_done=true
   })
   if(verify_done){
-    let updatepass=await registered_users.findOneAndUpdate({email:email_for_otp},{password:new_password})
+    let updatepass=await registeredusers.findOneAndUpdate({email:email_for_otp},{password:new_password})
     if(updatepass!==null)
     update_stat.updatedone=true
     console.log(verify_status)

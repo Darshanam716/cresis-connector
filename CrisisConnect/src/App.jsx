@@ -19,6 +19,7 @@ import ForgotPassword from './components/ForgotPassword';
 import Admin_form from './components/admin_form';
 import CoordContext from './context/coordinates/coordsContext';
 import ServiceContext from './context/service/serviceRoute';
+import UserLocationMap from './components/UserLocationMap';
 import { useState } from 'react';
 function App() {
   const [coordinate,SetCoordinate]=useState({lat:0,lng:0})
@@ -46,6 +47,7 @@ function App() {
         <Route path="/medicineadmin" element={<MedicineAdmin modifyCoordinate={SetCoordinate} service={Setservice}/>} />
         <Route path="/forgotpassword" element={<ForgotPassword modifyCoordinate={SetCoordinate} service={Setservice}/>} />
         <Route path="/find-nearest-place" element={<Admin_form/>} />
+        <Route path="/map" element={<UserLocationMap />} />
       </Routes>
     </Router>
     </ServiceContext.Provider>

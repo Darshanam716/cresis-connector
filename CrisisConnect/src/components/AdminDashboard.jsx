@@ -45,7 +45,7 @@ const AdminDashboard = () => {
       </nav>
       <main className='dash'>
       <div className="welcome flex justify-center pt-32">
-          <h1>Welcome Admin</h1>
+          <h1>Welcome Admin Darshan</h1>
         </div>
         <div className="dashboard flex gap-20 justify-center mt-28">
           <div onClick={() => navigate("/fireadmin")} className="card fireSupport cursor-pointer">
