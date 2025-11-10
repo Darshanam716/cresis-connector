@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors())
 app.use(express.json());
 app.use(bodyParser.json())
-const client=mongoose.connect('mongodb://0.0.0.0:27017/CrisisConnect').then((val)=>{
+const client=mongoose.connect('mango db serve here').then((val)=>{
     console.log('connected')
 })
 const log_stat={email:false,password:false,name:null,email_val:null}
